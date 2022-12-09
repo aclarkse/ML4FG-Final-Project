@@ -6,7 +6,7 @@ pacman::p_load(
 )
 
 # set working directory
-setwd("/Users/clarkao1/Documents/GitHub/ML4FG")
+setwd("~/Documents/GitHub/ML4FG")
 
 pheno <- read.table("pregnancy_outcomes.csv", 
                     header = TRUE, stringsAsFactors = FALSE, sep = ",")
@@ -47,16 +47,38 @@ covars <- select(covars, c("familyid", "subjectid", "outcome", "BMI"))
 # remove observations with missing BMI
 covars <- covars %>% drop_na(BMI)
 
+create.BMI.cats <- function(df){
+  df <- df %>%
+    mutate(
+      BMI = case_when(
+        BMI < 18.5 ~ 1,                # underweight
+        18.5 <= BMI & BMI <= 24.9 ~ 2, # normal weight
+        25 <= BMI & BMI <= 29.9 ~ 3,   # overweight
+        BMI >= 30 ~ 4                  # obese
+    )
+  )
+  
+  df$BMI <- as.factor(df$BMI)
+  
+  # remove observations with missing BMI category
+  df <- df %>% drop_na(BMI)
+  
+  return(df)
+}
+
+# sanity check of BMI categories
+#covars %>%
+#  count(BMI)
+
 # extract phenotype-relevant information
 pheno <- select(covars, c("familyid", "subjectid", "outcome"))
 
-# final sanity check
-pheno %>%
-  count(outcome)
 
 # save files
 write.table(pheno, file = "pheno.txt", sep = " ", col.names = FALSE, 
             row.names = FALSE, quote=FALSE)
+
+covars <- select(covars, c("familyid", "subjectid", "BMI"))
 
 write.table(covars, file = "covars.txt", sep = " ", col.names = FALSE, 
             row.names = FALSE, quote=FALSE)
