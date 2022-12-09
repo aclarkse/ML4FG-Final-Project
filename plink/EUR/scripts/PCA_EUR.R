@@ -6,10 +6,10 @@ pacman::p_load(
 )
 
 # set working directory
-setwd("/Users/clarkao1/Documents/ML4FG_project/plink/EUR")
+setwd("~/Documents/GitHub/ML4FG/plink/EUR")
 
 # run PCA
-system("/Users/clarkao1/Documents/ML4FG_project/plink/plink --bfile EUR_ready --pca --out pca")
+system("~/Documents/GitHub/ML4FG/plink/plink --bfile EUR_ready --pca --out pca")
 
 # read in the eigenvectors and eigenvalues files
 eigenvals <- read.table("pca.eigenval")
@@ -24,8 +24,7 @@ ggplot(data = eigenvecs) +
   geom_point(mapping = aes(x = V3, y=V4), size = 3, show.legend = TRUE) + 
   geom_hline(yintercept = 0, linetype = "dotted") + 
   geom_vline(xintercept = 0, linetype = "dotted") +
-  labs(title = "PCA of European Individuals",
-       x = paste0("Principal component 1 (",eigen_percent[1,1]," %)"),
+  labs(x = paste0("Principal component 1 (",eigen_percent[1,1]," %)"),
        y = paste0("Principal component 2 (",eigen_percent[2,1]," %)")) + 
   theme_minimal()
 
@@ -35,12 +34,10 @@ ggplot(data = eigenvals) +
   geom_point(aes(x=c(1:20), y=V1), size=3) + 
   geom_line(aes(x=c(1:20), y=V1)) + 
   geom_vline(xintercept = 5, linetype = "dashed") +
-  labs(title="Scree Plot",
-       subtitle = "European Individuals",
-       x = "Component",
+  labs(x = "Component",
        y = "Explained Variance") +
   theme(
     plot.title = element_text(color = "black", size = 14, face = "bold"),
-    plot.subtitle = element_text(color = "black", size = 10))
-
+    plot.subtitle = element_text(color = "black", size = 10)) +
+  theme_minimal()
     

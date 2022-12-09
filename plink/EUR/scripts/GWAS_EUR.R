@@ -1,7 +1,6 @@
 # clear workspace
 rm(list = ls())
 
-library(Gviz)
 pacman::p_load(
   dplyr,
   ggplot2,
@@ -10,21 +9,28 @@ pacman::p_load(
 )
 
 # set working directory
-setwd("/Users/clarkao1/Documents/ML4FG_project/plink/EUR")
+setwd("~/Documents/GitHub/ML4FG/plink/EUR")
 
 # run association test
-system("/Users/clarkao1/Documents/ML4FG_project/plink/plink --bfile EUR_ready --assoc --out assoc_results")
+system("~/Documents/GitHub/ML4FG/plink/plink --bfile EUR_ready --assoc --out assoc_results")
 
 # logistic regression using PCs 1-5 (optionally could have --adjust flag)
-system("/Users/clarkao1/Documents/ML4FG_project/plink/plink --allow-no-sex --bfile EUR_ready --covar pca.eigenvec --covar-number 1-5 --logistic --ci 0.95 --hide-covar --out logistic_results")
+system("~/Documents/GitHub/ML4FG/plink/plink --allow-no-sex --bfile EUR_ready --covar pca.eigenvec --covar-number 1-5 --logistic --ci 0.95 --hide-covar --out logistic_results")
+
+# logistic regression adding interaction term with BMI
+system("~/Documents/GitHub/ML4FG/plink/plink --allow-no-sex --bfile EUR_ready --logistic interaction --ci 0.95 --covar covars.txt --parameters 3 --out logistic_interaction")
 
 # remove NA values, those might give problems generating plots in later steps
 system("awk '!/'NA'/' logistic_results.assoc.logistic > logistic_results.assoc_2.logistic")
 
+# remove NA values, those might give problems generating plots in later steps (interaction)
+system("awk '!/'NA'/' logistic_interaction.assoc.logistic > logistic_interaction.assoc_2.logistic")
+
 # read in results
-GWAS.results <- read.table("logistic_results.assoc_2.logistic", header=TRUE)
+GWAS.results <- read.table("logistic_interaction.assoc_2.logistic", header=FALSE)
 
 GWAS.results <- select(GWAS.results, c("SNP", "CHR", "BP", "P"))
+
 
 ### Create Manhattan Plot ###
 
@@ -32,13 +38,13 @@ GWAS.results <- select(GWAS.results, c("SNP", "CHR", "BP", "P"))
 manhattan(res, col = c(brewer.pal(n = 5, name = "Set2")), annotatePval = 0.001)
 
 # version 2
-SNPs <- list(filter(GWAS.results, P < 1e-5)$SNP)
-SNPs
+SNPs <- list(filter(GWAS.results, P < 1e-6)$SNP)
 CMplot(GWAS.results, plot.type = "m", LOG10 = TRUE, threshold = c(1e-6, 1e-5),
        threshold.lty=c(1,2), threshold.lwd=c(1,1), threshold.col=c("black","grey"),
        signal.col=c("red"," green"), signal.cex=c(1.5,1.5), signal.pch=c(19,19),
        chr.den.col = NULL, file = "jpg", memo = "", dpi=300, file.output = TRUE, verbose = FALSE,
        highlight = SNPs, highlight.text=SNPs, highlight.text.cex=1)
+
 
 ### Create QQ-Plot ###
 
