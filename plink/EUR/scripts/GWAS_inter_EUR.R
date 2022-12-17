@@ -10,21 +10,21 @@ pacman::p_load(
 )
 
 # set working directory
-setwd("~/Documents/GitHub/ML4FG/plink/AFR")
+setwd("~/Documents/GitHub/ML4FG/plink/EUR")
 
-# logistic regression association analysis
-system("~/Documents/GitHub/ML4FG/plink/plink --allow-no-sex --bfile AFR_ready --logistic --covar pca.eigenvec --covar-number 1 --ci 0.95 --out log_results")
 
+# logistic regression adding interaction term with BMI
+system("~/Documents/GitHub/ML4FG/plink/plink --allow-no-sex --bfile EUR_ready --logistic interaction --ci 0.95 --covar covars.txt --out log_int")
 
 # remove NA values, those might give problems generating plots in later steps
-system("awk '!/'NA'/' log_results.assoc.logistic  > results_log")
+system("awk '!/'NA'/' log_int.assoc.logistic  > results_int")
 
 # read in results
-GWAS.results <- read.table("results_log", header=TRUE)
+GWAS.results <- read.table("results_int", header=TRUE)
 
 # test for genomic inflation
 test.genomic.inflation <- function(data, plot=FALSE, proportion=1.0,
-                        method="regression", filter=TRUE, df=1,... ) {
+                                   method="regression", filter=TRUE, df=1,... ) {
   data <- data[which(!is.na(data))]
   if (proportion>1.0 || proportion<=0)
     stop("proportion argument should be greater then zero and less than or equal to one")
@@ -92,24 +92,26 @@ test.genomic.inflation <- function(data, plot=FALSE, proportion=1.0,
   out
 }
 
-
 lambda <- test.genomic.inflation(GWAS.results$P)
 lambda
 
 GWAS <- select(GWAS.results, c("SNP", "CHR", "BP", "P"))
 
-filter(GWAS, P < 1e-5)
-### Create Manhattan Plot ###
+# for generating the locuszoom plot
+# http://locuszoom.org/genform.php?type=yourdata
+locus <- select(GWAS.results, c("SNP", "P"))
+write.table(locus , file="AFR_res.txt", sep = "\t", quote=FALSE, row.names = FALSE)
+
+
+### Manhattan Plot ###
 SNPs <- list(filter(GWAS, P < 1e-5)$SNP)
-SNPs
-CMplot(GWAS, plot.type = "m", LOG10 = TRUE, threshold = c(1e-6),
+CMplot(GWAS, plot.type = "m", LOG10 = TRUE, threshold = c(1e-5),
        threshold.lty=c(2), threshold.lwd=c(1), threshold.col=c("grey"),
        signal.col=c("red"), signal.cex=c(1.5), signal.pch=c(19),
        chr.den.col = NULL, file = "jpg", memo = "", dpi=400, file.output = TRUE, verbose = FALSE,
        highlight = SNPs, highlight.text=SNPs, highlight.text.cex=1)
 
-### Create QQ-Plot ###
+### QQ Plot ###
 CMplot(GWAS, plot.type="q", box=FALSE, file="jpg", memo="", dpi=400,
        conf.int=TRUE, conf.int.col=NULL, threshold.col="red", threshold.lty=2,
        file.output=TRUE,verbose=TRUE,width=5,height=5)
-

@@ -43,4 +43,4 @@ system("~/Documents/GitHub/ML4FG/plink/plink --bfile AFR_auto --genome --min 0.2
 system("~/Documents/GitHub/ML4FG/plink/plink --bfile AFR_crytic --out AFR_ready --make-bed")
 
 # make .ped and .map files for prepared data
-#system("~/Documents/GitHub/ML4FG/plink/plink --bfile AFR_crytic --out AFR_ready --recode")
+system("~/Documents/GitHub/ML4FG/plink/plink --bfile AFR_crytic --out AFR_ready --recode")

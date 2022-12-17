@@ -16,33 +16,32 @@ demo <- read.table("demographics.csv",
                    header = TRUE, stringsAsFactors = FALSE, sep = ",")
 
 # the V2 column contains the family and individual id
-pheno <-select(pheno, c("Row.names", "V2", "pOUTCOME"))
+pheno <-select(pheno, c("Row.names", "V2", "SPONTANEOUS"))
 pheno$familyid <- as.factor(pheno$V2)
 pheno$subjectid <- as.factor(pheno$V2)
-pheno$value <- as.factor(pheno$pOUTCOME)
+pheno$value <- as.factor(pheno$SPONTANEOUS)
 
 pheno <- select(pheno, c("Row.names", "familyid", "subjectid", "value"))
 pheno %>%
   count(value)
 
-# recode target into binary
-# 1 --> control, 2--> case
-pheno <- pheno %>% mutate(outcome = recode(value,
-                 '3' = '2',
-                 '4' = '2',
-                 '5' = '2'))
-pheno <- pheno %>% drop_na(outcome)
+# drop missing values
+pheno <- pheno %>% drop_na(value)
+
+# # 1 --> control, 2--> case
+# get rid of values encoded as 3
+pheno <- filter(pheno, value != 3)
 
 # sanity check
 pheno %>%
-  count(outcome)
+  count(value)
 
 # stitch together outcome with BMI as covariates
 demo <- select(demo, c("StudyID", "BMI"))
 demo <- rename(demo, row = StudyID)
 pheno <- rename(pheno, row = Row.names)
 covars <- merge(demo, pheno, by="row")
-covars <- select(covars, c("familyid", "subjectid", "outcome", "BMI"))
+covars <- select(covars, c("familyid", "subjectid", "value", "BMI"))
 
 # remove observations with missing BMI
 covars <- covars %>% drop_na(BMI)
@@ -51,10 +50,10 @@ create.BMI.cats <- function(df){
   df <- df %>%
     mutate(
       BMI = case_when(
-        BMI < 18.5 ~ 1,                # underweight
-        18.5 <= BMI & BMI <= 24.9 ~ 2, # normal weight
-        25 <= BMI & BMI <= 29.9 ~ 3,   # overweight
-        BMI >= 30 ~ 4                  # obese
+        BMI < 18.5 ~ 1,                    # underweight
+        18.5 <= BMI & BMI <= 24.9 ~ 2,   # normal weight
+        25 <= BMI & BMI <= 29.9 ~ 3,        # overweight
+        BMI >= 30 ~ 4                            # obese
     )
   )
   
@@ -66,12 +65,11 @@ create.BMI.cats <- function(df){
   return(df)
 }
 
-# sanity check of BMI categories
-#covars %>%
-#  count(BMI)
+#covars <- create.BMI.cats(covars)
+
 
 # extract phenotype-relevant information
-pheno <- select(covars, c("familyid", "subjectid", "outcome"))
+pheno <- select(covars, c("familyid", "subjectid", "value"))
 
 
 # save files
@@ -82,3 +80,4 @@ covars <- select(covars, c("familyid", "subjectid", "BMI"))
 
 write.table(covars, file = "covars.txt", sep = " ", col.names = FALSE, 
             row.names = FALSE, quote=FALSE)
+
