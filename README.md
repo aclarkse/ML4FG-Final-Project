@@ -1,2 +1,1 @@
-# ML4FG
- Final project Repository
+# ML4FG: Final Project
